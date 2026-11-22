@@ -3,7 +3,7 @@ on:
   push:
   workflow_dispatch:
 jobs:
-  build:
+  ui-stage1:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,29 +21,19 @@ jobs:
         working-directory: WinOS
       - uses: actions/upload-artifact@v4
         with:
-          name: WinOS-debug-apk
+          name: WinOS-stage1-ui
           path: WinOS/app/build/outputs/apk/debug/*.apk
-  winlator-check:
+  winos-runtime:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - run: unzip -q WinOS.zip
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
-      - name: Clone Winlator 11.2
-        run: git clone --depth 1 --branch v11.2.0 --recurse-submodules --shallow-submodules https://github.com/brunodev85/winlator.git src
-      - name: Fix duplicate native libs
-        run: |
-          sed -i "/compileSdk 34/a\    packagingOptions { pickFirst '**/*.so' }" src/app/app/build.gradle
-          grep -n "packagingOptions" src/app/app/build.gradle
-      - name: Install SDK parts
-        run: |
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34" "ndk;24.0.8215888" "cmake;3.22.1" > /dev/null
-      - name: Build Winlator
-        working-directory: src/app
-        run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon
+      - run: bash WinOS/ci/build_winos.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: Winlator-check-apk
-          path: src/app/app/build/outputs/apk/debug/*.apk
+          name: WinOS-runtime-apk
+          path: WinOS/out/*.apk
