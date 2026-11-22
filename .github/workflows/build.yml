@@ -32,6 +32,10 @@ jobs:
           java-version: 17
       - name: Clone Winlator 11.2
         run: git clone --depth 1 --branch v11.2.0 --recurse-submodules --shallow-submodules https://github.com/brunodev85/winlator.git src
+      - name: Fix duplicate native libs
+        run: |
+          sed -i "/compileSdk 34/a\    packagingOptions { pickFirst '**/*.so' }" src/app/app/build.gradle
+          grep -n "packagingOptions" src/app/app/build.gradle
       - name: Install SDK parts
         run: |
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
